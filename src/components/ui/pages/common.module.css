@@ -3,7 +3,9 @@
   width: 100%;
   max-width: 1240px;
   height: 100%;
+  min-height: 0;
   margin: 0 auto;
+  padding: 0 16px;
 }
 
 .wrapCenter {
@@ -12,6 +14,7 @@
   justify-content: center;
   align-items: center;
   width: 480px;
+  max-width: 100%;
   margin: auto;
 }
 
@@ -41,4 +44,18 @@
 .error {
   color: #f00;
   text-align: center;
+}
+
+.form input {
+  max-width: 100%;
+}
+
+@media (width <= 900px) {
+  .wrapCenter {
+    margin-top: 48px;
+  }
+
+  .question {
+    text-align: center;
+  }
 }

@@ -1,12 +1,15 @@
 .burger_constructor {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  width: 600px;
+  width: 100%;
+  min-height: 0;
   padding-bottom: 20px;
   color: #f2f2f3;
 }
 
 .elements {
+  flex: 1;
   min-height: 100px;
   margin: 0;
   padding: 0;
@@ -65,4 +68,17 @@
 
 .element:last-child {
   margin-bottom: 0;
+}
+
+@media (width <= 900px) {
+  .elements {
+    max-height: 60vh;
+  }
+
+  .total {
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-right: 0;
+    margin-bottom: 24px;
+  }
 }

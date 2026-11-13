@@ -3,8 +3,11 @@
   top: 50%;
   left: 50%;
   z-index: 9999;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
   margin: auto;
   padding: 40px 40px 60px;
+  overflow-y: auto;
   background-color: var(--background);
   border-radius: 40px;
   box-shadow:
@@ -37,4 +40,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+@media (width <= 600px) {
+  .modal {
+    width: calc(100vw - 16px);
+    padding: 16px 8px 32px;
+    border-radius: 24px;
+  }
+
+  .header h3 {
+    font-size: 24px;
+  }
 }

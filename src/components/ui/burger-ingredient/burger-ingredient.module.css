@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .article {
@@ -27,4 +28,22 @@
 .addButton {
   justify-content: center;
   width: 260px;
+}
+
+.article,
+.addButton {
+  width: 100%;
+}
+
+.article img {
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+@media (width <= 600px) {
+  .text {
+    font-size: 12px;
+    line-height: 18px;
+  }
 }

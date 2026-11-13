@@ -1,7 +1,8 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   color: #f2f2f3;
   background-color: #131316;
 }
@@ -25,9 +26,23 @@
 }
 
 .detailPageWrap {
-  margin: 120px auto;
+  max-width: 100%;
+  margin: 40px auto;
+  padding: 0 16px;
+  overflow-y: auto;
 }
 
 .detailHeader {
   text-align: center;
+}
+
+@media (width <= 900px) {
+  .app {
+    height: auto;
+  }
+
+  .detailPageWrap {
+    width: 100%;
+    margin: 24px auto;
+  }
 }

@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 520px;
-  margin: 0 60px;
+  width: min(520px, 100%);
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -21,4 +21,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.content img {
+  max-width: 100%;
+}
+
+@media (width <= 600px) {
+  .nutritional_values {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px 8px;
+  }
+
+  .nutritional_value {
+    width: calc(50% - 8px);
+  }
 }
