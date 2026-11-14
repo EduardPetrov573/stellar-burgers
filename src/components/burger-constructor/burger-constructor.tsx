@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from '@services/store';
 
 import { RequestError } from '../request-error';
 
+import styles from './burger-constructor.module.css';
+
 export const BurgerConstructor = (): React.JSX.Element => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export const BurgerConstructor = (): React.JSX.Element => {
   };
 
   return (
-    <div className="constructor-column">
+    <div className={styles.column}>
       <BurgerConstructorUI
         price={price}
         orderRequest={submitting}

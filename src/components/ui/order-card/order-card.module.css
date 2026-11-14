@@ -1,7 +1,5 @@
 .ingredients {
   display: flex;
-  flex: 1;
-  min-width: 0;
   margin: 0;
   padding: 0;
 }
@@ -9,7 +7,7 @@
 .order {
   display: block;
   box-sizing: border-box;
-  min-width: 0;
+  min-width: 576px;
   color: unset;
   text-decoration: none;
   background-color: #1c1c21;
@@ -38,11 +36,9 @@
 
 .img_wrap {
   position: relative;
-  flex-shrink: 0;
   width: 62px;
   height: 62px;
   margin: 0;
-  margin-right: -20px;
   padding: 0;
   list-style: none;
   background-color: #1c1c21;
@@ -52,7 +48,7 @@
 
 .img_wrap:nth-child(n + 2) {
   position: relative;
-  right: auto;
+  right: 25px;
 }
 
 .img {
@@ -69,25 +65,4 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-}
-
-@media (width <= 600px) {
-  .order {
-    padding: 16px 8px;
-  }
-
-  .img_wrap {
-    width: 40px;
-    height: 40px;
-    margin-right: -12px;
-  }
-
-  .img {
-    width: 72px;
-    height: 36px;
-  }
-
-  .order_info {
-    gap: 8px;
-  }
 }

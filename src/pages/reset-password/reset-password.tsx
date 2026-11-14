@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { useDispatch, useSelector } from '@services/store';
+import { RESET_PASSWORD_KEY } from '@utils/constants';
 
 import type { SyntheticEvent } from 'react';
 
@@ -13,7 +14,7 @@ export const ResetPassword = (): React.JSX.Element => {
   const { error, isLoading } = useSelector(selectUserState);
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
-  const [canReset] = useState(() => !!sessionStorage.getItem('resetPassword'));
+  const [canReset] = useState(() => !!sessionStorage.getItem(RESET_PASSWORD_KEY));
   useEffect(() => {
     dispatch(clearUserError());
   }, [dispatch]);

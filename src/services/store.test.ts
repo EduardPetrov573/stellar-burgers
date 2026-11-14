@@ -59,7 +59,7 @@ test('a failed ingredients request leaves a retryable error and a successful ret
   });
 });
 
-test('a failed checkout keeps the burger, while a successful retry clears it and refreshes both lists', async () => {
+test('a failed checkout keeps the burger, while a successful retry clears it without loading unseen lists', async () => {
   const store = configureStore({ reducer: rootReducer });
   store.dispatch(login.fulfilled(user, 'login', credentials));
   store.dispatch(addIngredient(ingredient));
@@ -67,10 +67,6 @@ test('a failed checkout keeps the burger, while a successful retry clears it and
     .mocked(orderBurgerApi)
     .mockRejectedValueOnce(new Error('Заказ не создан'))
     .mockResolvedValueOnce({ success: true, order, name: order.name });
-  jest
-    .mocked(getFeedsApi)
-    .mockResolvedValue({ success: true, orders: [order], total: 1, totalToday: 1 });
-  jest.mocked(getOrdersApi).mockResolvedValue([order]);
   const ids = [ingredient._id, ingredient._id];
   await store.dispatch(createOrder(ids));
   expect(store.getState().burgerConstructor.bun?._id).toBe(ingredient._id);
@@ -78,8 +74,9 @@ test('a failed checkout keeps the burger, while a successful retry clears it and
   await store.dispatch(createOrder(ids));
   expect(store.getState().burgerConstructor).toEqual({ bun: null, ingredients: [] });
   expect(store.getState().orders.created).toEqual(order);
-  expect(getFeedsApi).toHaveBeenCalledTimes(1);
-  expect(getOrdersApi).toHaveBeenCalledTimes(1);
+
+  expect(getFeedsApi).not.toHaveBeenCalled();
+  expect(getOrdersApi).not.toHaveBeenCalled();
 });
 
 test('a private request finishing after logout cannot restore the previous user history', async () => {

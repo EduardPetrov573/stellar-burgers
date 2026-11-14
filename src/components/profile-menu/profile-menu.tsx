@@ -6,11 +6,7 @@ import { useDispatch, useSelector } from '@services/store';
 
 import { RequestError } from '../request-error';
 
-export const ProfileMenu = ({
-  compact = false,
-}: {
-  compact?: boolean;
-}): React.JSX.Element => {
+export const ProfileMenu = (): React.JSX.Element => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,7 +26,7 @@ export const ProfileMenu = ({
 
   return (
     <>
-      <ProfileMenuUI handleLogout={handleLogout} pathname={pathname} compact={compact} />
+      <ProfileMenuUI handleLogout={handleLogout} pathname={pathname} />
       {error && <RequestError message={error} />}
     </>
   );

@@ -1,5 +1,7 @@
 import { getIngredientsApi } from '@api';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+
+import { createAppAsyncThunk } from '../create-app-async-thunk';
 
 import type { TIngredient } from '@utils-types';
 
@@ -15,12 +17,11 @@ const initialState: IngredientsState = {
   error: null,
   loaded: false,
 };
-export const fetchIngredients = createAsyncThunk(
+export const fetchIngredients = createAppAsyncThunk(
   'ingredients/fetch',
   getIngredientsApi,
   {
-    condition: (_, { getState }) =>
-      !(getState() as { ingredients: IngredientsState }).ingredients.isLoading,
+    condition: (_, { getState }) => !getState().ingredients.isLoading,
   }
 );
 const ingredientsSlice = createSlice({

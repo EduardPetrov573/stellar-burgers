@@ -54,19 +54,19 @@ test('ingredient click opens a routed modal; close, Back/Forward and direct link
   await page.goto('/');
   await page.getByRole('link', { name: new RegExp(ingredients[0].name) }).click();
   await expect(page).toHaveURL('/ingredients/bun-a');
-  await expect(page.getByRole('dialog')).toContainText('Калории, ккал');
+  await expect(page.locator('#modals > div').first()).toContainText('Калории, ккал');
   await expect(page.getByRole('link', { name: 'Конструктор', exact: true })).toHaveClass(
     /link_active/
   );
   await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
   await expect(page).toHaveURL('/');
   await page.goForward();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('#modals > div').first()).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page).toHaveURL('/');
   await page.goto('/ingredients/bun-a');
   await expect(page.getByRole('heading', { name: ingredients[0].name })).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('#modals > div').first()).toHaveCount(0);
 });
 
 test('guest logs in, keeps the burger, creates an authorized order, and sees it in history', async ({
@@ -90,7 +90,7 @@ test('guest logs in, keeps the burger, creates an authorized order, and sees it 
     page.getByText(`${ingredients[0].name} (верх)`, { exact: true })
   ).toBeVisible();
   await page.getByRole('button', { name: 'Оформить заказ' }).click();
-  await expect(page.getByRole('dialog')).toContainText('124');
+  await expect(page.locator('#modals > div').first()).toContainText('124');
   const orderRequest = api.requests.find(
     (request) => request.path === '/orders' && request.method === 'POST'
   );
@@ -115,7 +115,7 @@ test('protected nested order redirects to login and returns to the requested dir
   await login(page);
   await expect(page).toHaveURL('/profile/orders/123');
   await expect(page.getByRole('heading', { name: sampleOrder.name })).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('#modals > div').first()).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: initialUser.name, exact: true })
   ).toHaveClass(/link_active/);
@@ -155,7 +155,7 @@ test('profile cancels changes, saves only changed fields, and logs out', async (
   expect(api.requests.some((request) => request.path === '/auth/logout')).toBe(true);
 });
 
-test('feed refreshes from HTTP and automatic updates, shows totals and opens order modal', async ({
+test('feed loads once, refreshes only on demand and shows the order number once', async ({
   page,
 }) => {
   const api = await setupApi(page);
@@ -163,53 +163,85 @@ test('feed refreshes from HTTP and automatic updates, shows totals and opens ord
   await page.goto('/feed');
   const orderLink = page.getByRole('link', { name: /#000123/ });
   await expect(orderLink).toContainText('370');
-  const beforeRefresh = api.requests.filter(
+  await expect(
+    page.getByRole('button', { name: 'Обновить', exact: true })
+  ).toBeEnabled();
+  const initialRequests = api.requests.filter(
     (request) => request.path === '/orders/all'
   ).length;
+  api.setFeed([
+    { ...sampleOrder, _id: 'new-order', number: 125, name: 'Новый бургер' },
+    sampleOrder,
+  ]);
+  await page.clock.fastForward(60000);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  expect(api.requests.filter((request) => request.path === '/orders/all')).toHaveLength(
+    initialRequests
+  );
+  await expect(page.getByRole('link', { name: /#000125/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Обновить', exact: true }).click();
-  await expect
-    .poll(() => api.requests.filter((request) => request.path === '/orders/all').length)
-    .toBeGreaterThan(beforeRefresh);
+  await expect(page.getByRole('link', { name: /#000125/ })).toBeVisible();
+  await expect(page.getByText('502', { exact: true })).toBeVisible();
+  expect(api.requests.filter((request) => request.path === '/orders/all')).toHaveLength(
+    initialRequests + 1
+  );
   await orderLink.click();
   await expect(page).toHaveURL('/feed/123');
-  await expect(page.getByRole('dialog')).toContainText('370');
+  const modal = page.locator('#modals > div').first();
+  await expect(modal).toContainText('370');
+  await expect(modal.getByText('#123', { exact: true })).toHaveCount(1);
+  await expect(modal.getByText('#000123', { exact: true })).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: 'Лента заказов', exact: true })
   ).toHaveClass(/link_active/);
   await page.keyboard.press('Escape');
-  api.setFeed([
-    { ...sampleOrder, _id: 'live-order', number: 125, name: 'Новый бургер' },
-    sampleOrder,
-  ]);
-  await page.clock.fastForward(5000);
-  await expect(page.getByRole('link', { name: /#000125/ })).toBeVisible();
-  await expect(page.getByText('502', { exact: true })).toBeVisible();
-  await page.goto('/feed/123');
+  await page.goto('/feed/123/');
+  await expect(page.getByRole('heading', { name: '#123', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: sampleOrder.name })).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('#modals > div')).toHaveCount(0);
 });
 
-test('history receives status changes automatically and uses protected modal routes', async ({
+test('history loads statuses once without polling and uses protected modal routes', async ({
   page,
 }) => {
   const api = await setupApi(page, true);
+  api.setHistory([
+    { ...sampleOrder, status: 'cancelled' },
+    { ...sampleOrder, _id: 'pending-order', number: 124, status: 'pending' },
+    { ...sampleOrder, _id: 'created-order', number: 125, status: 'created' },
+  ]);
   await page.clock.install();
   await page.goto('/profile/orders');
   await expect(
     page.getByRole('link', { name: 'История заказов', exact: true })
   ).toHaveClass(/link_active/);
-  await expect(page.getByRole('link', { name: /#000123/ })).toContainText('Выполнен');
-  api.setHistory([{ ...sampleOrder, status: 'cancelled' }]);
-  await page.clock.fastForward(5000);
   await expect(page.getByRole('link', { name: /#000123/ })).toContainText('Отменён');
-  api.setHistory([{ ...sampleOrder, status: 'pending' }]);
-  await page.clock.fastForward(5000);
-  await expect(page.getByRole('link', { name: /#000123/ })).toContainText('Готовится');
+  await expect(page.getByRole('link', { name: /#000124/ })).toContainText('Готовится');
+  await expect(page.getByRole('link', { name: /#000125/ })).toContainText('Создан');
+  const initialRequests = api.requests.filter(
+    (request) => request.path === '/orders'
+  ).length;
+  await page.clock.fastForward(60000);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  expect(api.requests.filter((request) => request.path === '/orders')).toHaveLength(
+    initialRequests
+  );
   await page.getByRole('link', { name: /#000123/ }).click();
   await expect(page).toHaveURL('/profile/orders/123');
-  await expect(page.getByRole('dialog')).toContainText('370');
+  const modal = page.locator('#modals > div').first();
+  await expect(modal).toContainText('370');
+  await expect(modal.getByText('#123', { exact: true })).toHaveCount(1);
   await expect(
     page.getByRole('link', { name: 'История заказов', exact: true })
+  ).toHaveClass(/link_active/);
+  await expect(
+    page.getByRole('link', { name: initialUser.name, exact: true })
   ).toHaveClass(/link_active/);
 });
 
@@ -282,22 +314,4 @@ test('API error allows retry and an unknown route shows 404 independently of dat
   );
   await page.goto('/missing-page');
   await expect(page.getByText(/Ошибка 404/)).toBeVisible();
-});
-
-test('mobile navigation expands the personal menu and has no horizontal overflow', async ({
-  page,
-}) => {
-  await setupApi(page, true);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Открыть меню', exact: true }).click();
-  await page.getByRole('button', { name: 'Личный кабинет', exact: false }).click();
-  await page.getByRole('link', { name: 'История заказов', exact: true }).click();
-  await expect(page).toHaveURL('/profile/orders');
-  await expect(
-    page.getByRole('navigation', { name: 'Мобильная навигация' })
-  ).toHaveCount(0);
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
-  ).toBe(true);
 });

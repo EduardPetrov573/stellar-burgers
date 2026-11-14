@@ -12,11 +12,6 @@ export const Modal = memo(function Modal({
   children,
 }: TModalProps): React.JSX.Element {
   useEffect(() => {
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const dialog = modalRoot?.querySelector<HTMLElement>('[role=dialog]');
-    dialog?.focus();
     const handleEsc = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') onClose();
     };
@@ -24,8 +19,6 @@ export const Modal = memo(function Modal({
     document.addEventListener('keydown', handleEsc);
     return (): void => {
       document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = previousOverflow;
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
   }, [onClose]);
 

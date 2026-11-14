@@ -4,7 +4,6 @@ import { FeedUI } from '@ui-pages';
 import { useEffect } from 'react';
 
 import { RequestError } from '@components/request-error';
-import { startOrdersUpdates } from '@services/live-orders';
 import { useDispatch, useSelector } from '@services/store';
 
 export const Feed = (): React.JSX.Element => {
@@ -15,7 +14,6 @@ export const Feed = (): React.JSX.Element => {
   };
   useEffect(() => {
     void dispatch(fetchFeed());
-    return dispatch(startOrdersUpdates(false));
   }, [dispatch]);
   return (
     <>

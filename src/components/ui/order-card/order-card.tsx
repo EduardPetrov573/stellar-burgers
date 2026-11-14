@@ -42,8 +42,9 @@ export const OrderCardUI = memo(function OrderCardUI({
         <ul className={styles.ingredients}>
           {orderInfo.ingredientsToShow.map((ingredient, index) => {
             const zIndex = maxIngredients - index;
+            const right = 20 * index;
             return (
-              <li className={styles.img_wrap} style={{ zIndex }} key={index}>
+              <li className={styles.img_wrap} style={{ zIndex, right }} key={index}>
                 <img
                   style={{
                     opacity:

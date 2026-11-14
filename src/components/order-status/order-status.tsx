@@ -5,7 +5,7 @@ import type { OrderStatusProps } from './type';
 const STATUS_TEXT: Record<string, string | undefined> = {
   pending: 'Готовится',
   done: 'Выполнен',
-  created: 'Готовится',
+  created: 'Создан',
   cancelled: 'Отменён',
   canceled: 'Отменён',
 };

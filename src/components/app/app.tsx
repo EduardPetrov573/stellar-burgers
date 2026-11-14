@@ -2,6 +2,8 @@ import { AppHeader, IngredientDetails, Modal, OrderInfo } from '@components';
 import {
   ConstructorPage,
   Feed,
+  IngredientPage,
+  OrderPage,
   ForgotPassword,
   Login,
   NotFound404,
@@ -12,9 +14,15 @@ import {
 } from '@pages';
 import { fetchIngredients } from '@slices/ingredients';
 import { checkUser } from '@slices/user';
-import { clsx } from 'clsx';
 import { useCallback, useEffect } from 'react';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useMatch,
+  useNavigate,
+} from 'react-router-dom';
 
 import { useDispatch } from '@services/store';
 
@@ -27,24 +35,6 @@ import '../../index.css';
 
 import styles from './app.module.css';
 
-const IngredientPage = (): React.JSX.Element => (
-  <main className={styles.detailPageWrap}>
-    <h1 className={clsx(styles.detailHeader, 'text text_type_main-large')}>
-      Детали ингредиента
-    </h1>
-    <IngredientsBoundary>
-      <IngredientDetails />
-    </IngredientsBoundary>
-  </main>
-);
-const OrderPage = (): React.JSX.Element => (
-  <main className={styles.detailPageWrap}>
-    <IngredientsBoundary>
-      <OrderInfo />
-    </IngredientsBoundary>
-  </main>
-);
-
 const App = (): React.JSX.Element => {
   const dispatch = useDispatch();
   useEffect(() => {
@@ -53,6 +43,10 @@ const App = (): React.JSX.Element => {
   }, [dispatch]);
   const location = useLocation();
   const navigate = useNavigate();
+  const feedOrderMatch = useMatch('/feed/:number');
+  const profileOrderMatch = useMatch('/profile/orders/:number');
+  const orderNumber = (feedOrderMatch ?? profileOrderMatch)?.params.number;
+  const orderTitle = orderNumber ? `#${orderNumber}` : '';
   const background = (location.state as { background?: Location } | null)?.background;
   const closeModal = useCallback((): void => {
     void navigate(-1);
@@ -60,85 +54,93 @@ const App = (): React.JSX.Element => {
 
   return (
     <div className={styles.app}>
-      <AppHeader />
       <Routes location={background ?? location}>
         <Route
-          path="/"
           element={
-            <IngredientsBoundary>
-              <ConstructorPage />
-            </IngredientsBoundary>
+            <>
+              <AppHeader />
+              <Outlet />
+            </>
           }
-        />
-        <Route
-          path="/feed"
-          element={
-            <IngredientsBoundary>
-              <Feed />
-            </IngredientsBoundary>
-          }
-        />
-        <Route path="/ingredients/:id" element={<IngredientPage />} />
-        <Route path="/feed/:number" element={<OrderPage />} />
-        <Route
-          path="/login"
-          element={
-            <ProtectedRoute onlyGuest>
-              <Login />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <ProtectedRoute onlyGuest>
-              <Register />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/forgot-password"
-          element={
-            <ProtectedRoute onlyGuest>
-              <ForgotPassword />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reset-password"
-          element={
-            <ProtectedRoute onlyGuest>
-              <ResetPassword />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/orders"
-          element={
-            <ProtectedRoute>
+        >
+          <Route
+            path="/"
+            element={
               <IngredientsBoundary>
-                <ProfileOrders />
+                <ConstructorPage />
               </IngredientsBoundary>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/orders/:number"
-          element={
-            <ProtectedRoute>
-              <OrderPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<NotFound404 />} />
+            }
+          />
+          <Route
+            path="/feed"
+            element={
+              <IngredientsBoundary>
+                <Feed />
+              </IngredientsBoundary>
+            }
+          />
+          <Route path="/ingredients/:id" element={<IngredientPage />} />
+          <Route path="/feed/:number" element={<OrderPage />} />
+          <Route
+            path="/login"
+            element={
+              <ProtectedRoute onlyGuest>
+                <Login />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <ProtectedRoute onlyGuest>
+                <Register />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <ProtectedRoute onlyGuest>
+                <ForgotPassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <ProtectedRoute onlyGuest>
+                <ResetPassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/orders"
+            element={
+              <ProtectedRoute>
+                <IngredientsBoundary>
+                  <ProfileOrders />
+                </IngredientsBoundary>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/orders/:number"
+            element={
+              <ProtectedRoute>
+                <OrderPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound404 />} />
+        </Route>
       </Routes>
       {background && (
         <Routes>
@@ -155,10 +157,7 @@ const App = (): React.JSX.Element => {
           <Route
             path="/feed/:number"
             element={
-              <Modal
-                title={`#${location.pathname.split('/').pop()}`}
-                onClose={closeModal}
-              >
+              <Modal title={orderTitle} onClose={closeModal}>
                 <IngredientsBoundary>
                   <OrderInfo />
                 </IngredientsBoundary>
@@ -169,10 +168,7 @@ const App = (): React.JSX.Element => {
             path="/profile/orders/:number"
             element={
               <ProtectedRoute>
-                <Modal
-                  title={`#${location.pathname.split('/').pop()}`}
-                  onClose={closeModal}
-                >
+                <Modal title={orderTitle} onClose={closeModal}>
                   <IngredientsBoundary>
                     <OrderInfo />
                   </IngredientsBoundary>

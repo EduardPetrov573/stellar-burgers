@@ -1,5 +1,5 @@
 .wrap {
-  width: min(640px, 100%);
+  width: 640px;
   margin: 0 auto;
 }
 
@@ -9,7 +9,6 @@
 
 .img_wrap {
   position: relative;
-  flex-shrink: 0;
   width: 64px;
   height: 64px;
   background: linear-gradient(63.18deg, #801ab3 0%, #4c4cff 100%);
@@ -70,16 +69,4 @@
 
 .total {
   margin-left: auto;
-}
-
-@media (width <= 600px) {
-  .item {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
-  .item > span:first-of-type {
-    flex: 1;
-    min-width: 120px;
-  }
 }

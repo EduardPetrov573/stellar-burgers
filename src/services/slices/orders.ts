@@ -1,11 +1,11 @@
 import { getOrderByNumberApi, orderBurgerApi } from '@api';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
+import { createAppAsyncThunk } from '../create-app-async-thunk';
 import { clearConstructor } from './constructor';
-import { fetchFeed, fetchHistory } from './feed';
 import { logout } from './user';
 
-import type { TOrder, TUser } from '@utils-types';
+import type { TOrder } from '@utils-types';
 
 type OrdersState = {
   detail: TOrder | null;
@@ -25,24 +25,24 @@ const initialState: OrdersState = {
   created: null,
   submitError: null,
 };
-export const fetchOrder = createAsyncThunk('orders/detail', async (number: number) => {
-  const data = await getOrderByNumberApi(number);
-  if (!data.success || !data.orders.length) throw new Error('Заказ не найден');
-  return data.orders[0];
-});
-export const createOrder = createAsyncThunk(
+export const fetchOrder = createAppAsyncThunk(
+  'orders/detail',
+  async (number: number) => {
+    const data = await getOrderByNumberApi(number);
+    if (!data.success || !data.orders.length) throw new Error('Заказ не найден');
+    return data.orders[0];
+  }
+);
+export const createOrder = createAppAsyncThunk(
   'orders/create',
   async (ids: string[], { dispatch }) => {
     const data = await orderBurgerApi(ids);
     dispatch(clearConstructor());
-    // Refresh both lists even if their live connection is temporarily offline.
-    void dispatch(fetchFeed());
-    void dispatch(fetchHistory());
     return data.order;
   },
   {
     condition: (_, { getState }) => {
-      const state = getState() as { orders: OrdersState; user: { user: TUser | null } };
+      const state = getState();
       return !!state.user.user && !state.orders.submitting;
     },
   }

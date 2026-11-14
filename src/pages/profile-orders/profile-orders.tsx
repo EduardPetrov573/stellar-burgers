@@ -4,7 +4,6 @@ import { ProfileOrdersUI } from '@ui-pages';
 import { useEffect } from 'react';
 
 import { RequestError } from '@components/request-error';
-import { startOrdersUpdates } from '@services/live-orders';
 import { useDispatch, useSelector } from '@services/store';
 
 export const ProfileOrders = (): React.JSX.Element => {
@@ -12,7 +11,6 @@ export const ProfileOrders = (): React.JSX.Element => {
   const { history, historyLoading, historyError } = useSelector(selectHistoryState);
   useEffect(() => {
     void dispatch(fetchHistory());
-    return dispatch(startOrdersUpdates(true));
   }, [dispatch]);
   return (
     <>

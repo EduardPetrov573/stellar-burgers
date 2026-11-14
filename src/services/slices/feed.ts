@@ -1,9 +1,10 @@
 import { getFeedsApi, getOrdersApi } from '@api';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
+import { createAppAsyncThunk } from '../create-app-async-thunk';
 import { logout } from './user';
 
-import type { TOrder, TFeedState, TUser } from '@utils-types';
+import type { TOrder, TFeedState } from '@utils-types';
 
 type FeedState = {
   feed: TFeedState;
@@ -19,13 +20,12 @@ const initialState: FeedState = {
   historyError: null,
   historyRequestId: null,
 };
-export const fetchFeed = createAsyncThunk('feed/fetch', getFeedsApi, {
-  condition: (_, { getState }) =>
-    !(getState() as { feed: FeedState }).feed.feed.isLoading,
+export const fetchFeed = createAppAsyncThunk('feed/fetch', getFeedsApi, {
+  condition: (_, { getState }) => !getState().feed.feed.isLoading,
 });
-export const fetchHistory = createAsyncThunk('feed/history', getOrdersApi, {
+export const fetchHistory = createAppAsyncThunk('feed/history', getOrdersApi, {
   condition: (_, { getState }) => {
-    const state = getState() as { feed: FeedState; user: { user: TUser | null } };
+    const state = getState();
     return !!state.user.user && !state.feed.historyLoading;
   },
 });

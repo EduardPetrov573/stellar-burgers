@@ -7,7 +7,6 @@ import styles from './profile-menu.module.css';
 
 export const ProfileMenuUI = ({
   pathname,
-  compact = false,
   handleLogout,
 }: ProfileMenuUIProps): React.JSX.Element => (
   <>
@@ -45,12 +44,10 @@ export const ProfileMenuUI = ({
     >
       Выход
     </button>
-    {!compact && (
-      <p className="pt-20 text text_type_main-default text_color_inactive">
-        {pathname === '/profile'
-          ? 'В этом разделе вы можете изменить свои персональные данные'
-          : 'В этом разделе вы можете просмотреть свою историю заказов'}
-      </p>
-    )}
+    <p className="pt-20 text text_type_main-default text_color_inactive">
+      {pathname === '/profile'
+        ? 'В этом разделе вы можете изменить свои персональные данные'
+        : 'В этом разделе вы можете просмотреть свою историю заказов'}
+    </p>
   </>
 );

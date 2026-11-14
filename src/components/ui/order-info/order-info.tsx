@@ -15,14 +15,11 @@ export const OrderInfoUI = memo(function OrderInfoUI({
 }: OrderInfoUIProps): React.JSX.Element {
   return (
     <div className={styles.wrap}>
-      <p className="text text_type_digits-default">
-        #{String(orderInfo.number).padStart(6, '0')}
-      </p>
       <h3 className={clsx('text text_type_main-medium  pb-3 pt-10', styles.header)}>
         {orderInfo.name}
       </h3>
       <OrderStatus status={orderInfo.status} />
-      <p className={'text text_type_main-medium pt-15 pb-6'}>Состав:</p>
+      <p className="text text_type_main-medium pt-15 pb=6">Состав:</p>
       <ul className={clsx(styles.list, 'mb-8')}>
         {Object.values(orderInfo.ingredientsInfo).map((item, index) => (
           <li className={clsx('pb-4 pr-6', styles.item)} key={index}>
