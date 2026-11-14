@@ -49,5 +49,5 @@ export type TFeedState = {
   total: number;
   totalToday: number;
   isLoading: boolean;
-  error: unknown;
+  error: string | null;
 };
