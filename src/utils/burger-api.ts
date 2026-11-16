@@ -1,3 +1,5 @@
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@utils/constants';
+
 import { setCookie, getCookie } from './cookie';
 
 import type { TIngredient, TOrder, TUser } from './types';
@@ -33,45 +35,41 @@ type TRefreshResponse = TServerResponse<{
   accessToken: string;
 }>;
 
-export const refreshToken = (): Promise<TRefreshResponse> =>
-  fetch(`${URL}/auth/token`, {
+let refreshRequest: Promise<TRefreshResponse> | null = null;
+
+export const refreshToken = (): Promise<TRefreshResponse> => {
+  refreshRequest ??= fetch(`${URL}/auth/token`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json;charset=utf-8',
-    },
-    body: JSON.stringify({
-      token: localStorage.getItem('refreshToken'),
-    }),
+    headers: { 'Content-Type': 'application/json;charset=utf-8' },
+    body: JSON.stringify({ token: localStorage.getItem(REFRESH_TOKEN_KEY) }),
   })
     .then((res) => checkResponse<TRefreshResponse>(res))
-    .then((refreshData) => {
-      if (!refreshData.success) {
-        return Promise.reject(toApiError(refreshData));
-      }
-      localStorage.setItem('refreshToken', refreshData.refreshToken);
-      setCookie('accessToken', refreshData.accessToken);
-      return refreshData;
+    .then((data) => {
+      if (!data.success) throw toApiError(data);
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+      setCookie(ACCESS_TOKEN_KEY, data.accessToken, { sameSite: 'Lax' });
+      return data;
+    })
+    .finally(() => {
+      refreshRequest = null;
     });
+  return refreshRequest;
+};
 
 export const fetchWithRefresh = async <T>(
   url: RequestInfo,
   options: RequestInit
 ): Promise<T> => {
   try {
-    const res = await fetch(url, options);
-    return await checkResponse<T>(res);
-  } catch (err) {
-    if ((err as { message: string }).message === 'jwt expired') {
-      const refreshData = await refreshToken();
-      if (options.headers) {
-        (options.headers as Record<string, string>).authorization =
-          refreshData.accessToken;
-      }
-      const res = await fetch(url, options);
-      return await checkResponse<T>(res);
-    } else {
-      return Promise.reject(toApiError(err));
-    }
+    const response = await fetch(url, options);
+    return await checkResponse<T>(response);
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== 'jwt expired') throw error;
+    const data = await refreshToken();
+    const headers = new Headers(options.headers);
+    headers.set('authorization', data.accessToken);
+    const response = await fetch(url, { ...options, headers });
+    return checkResponse<T>(response);
   }
 };
 
@@ -106,7 +104,7 @@ export const getOrdersApi = (): Promise<TOrder[]> =>
     method: 'GET',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
-      authorization: getCookie('accessToken'),
+      authorization: getCookie(ACCESS_TOKEN_KEY),
     } as HeadersInit,
   }).then((data) => {
     if (data?.success) return data.orders;
@@ -123,7 +121,7 @@ export const orderBurgerApi = (data: string[]): Promise<TNewOrderResponse> =>
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
-      authorization: getCookie('accessToken'),
+      authorization: getCookie(ACCESS_TOKEN_KEY),
     } as HeadersInit,
     body: JSON.stringify({
       ingredients: data,
@@ -226,7 +224,7 @@ type TUserResponse = TServerResponse<{ user: TUser }>;
 export const getUserApi = (): Promise<TUserResponse> =>
   fetchWithRefresh<TUserResponse>(`${URL}/auth/user`, {
     headers: {
-      authorization: getCookie('accessToken'),
+      authorization: getCookie(ACCESS_TOKEN_KEY),
     } as HeadersInit,
   });
 
@@ -235,7 +233,7 @@ export const updateUserApi = (user: Partial<TRegisterData>): Promise<TUserRespon
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
-      authorization: getCookie('accessToken'),
+      authorization: getCookie(ACCESS_TOKEN_KEY),
     } as HeadersInit,
     body: JSON.stringify(user),
   });
@@ -247,6 +245,6 @@ export const logoutApi = (): Promise<TServerResponse> =>
       'Content-Type': 'application/json;charset=utf-8',
     },
     body: JSON.stringify({
-      token: localStorage.getItem('refreshToken'),
+      token: localStorage.getItem(REFRESH_TOKEN_KEY),
     }),
   }).then((res) => checkResponse<TServerResponse>(res));

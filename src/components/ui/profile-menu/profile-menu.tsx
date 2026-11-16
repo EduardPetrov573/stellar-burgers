@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { NavLink } from 'react-router-dom';
 
 import type { ProfileMenuUIProps } from './type';
@@ -12,9 +13,11 @@ export const ProfileMenuUI = ({
     <NavLink
       to={'/profile'}
       className={({ isActive }) =>
-        `text text_type_main-medium text_color_inactive pt-4 pb-4 ${
-          styles.link
-        } ${isActive ? styles.link_active : ''}`
+        clsx(
+          'text text_type_main-medium text_color_inactive pt-4 pb-4',
+          styles.link,
+          isActive ? styles.link_active : ''
+        )
       }
       end
     >
@@ -23,15 +26,20 @@ export const ProfileMenuUI = ({
     <NavLink
       to={'/profile/orders'}
       className={({ isActive }) =>
-        `text text_type_main-medium text_color_inactive pt-4 pb-4 ${
-          styles.link
-        } ${isActive ? styles.link_active : ''}`
+        clsx(
+          'text text_type_main-medium text_color_inactive pt-4 pb-4',
+          styles.link,
+          isActive ? styles.link_active : ''
+        )
       }
     >
       История заказов
     </NavLink>
     <button
-      className={`text text_type_main-medium text_color_inactive pt-4 pb-4 ${styles.button}`}
+      className={clsx(
+        'text text_type_main-medium text_color_inactive pt-4 pb-4',
+        styles.button
+      )}
       onClick={handleLogout}
     >
       Выход

@@ -1,10 +1,32 @@
+import { fetchHistory, selectHistoryState } from '@slices/feed';
+import { Preloader } from '@ui';
 import { ProfileOrdersUI } from '@ui-pages';
+import { useEffect } from 'react';
 
-import type { TOrder } from '@utils-types';
+import { RequestError } from '@components/request-error';
+import { useDispatch, useSelector } from '@services/store';
 
 export const ProfileOrders = (): React.JSX.Element => {
-  /** TODO: взять переменную из стора */
-  const orders: TOrder[] = [];
-
-  return <ProfileOrdersUI orders={orders} />;
+  const dispatch = useDispatch();
+  const { history, historyLoading, historyError } = useSelector(selectHistoryState);
+  useEffect(() => {
+    void dispatch(fetchHistory());
+  }, [dispatch]);
+  return (
+    <>
+      {historyError && (
+        <RequestError
+          message={historyError}
+          retry={() => {
+            void dispatch(fetchHistory());
+          }}
+        />
+      )}
+      {historyLoading && !history.length ? (
+        <Preloader />
+      ) : (
+        <ProfileOrdersUI orders={history} />
+      )}
+    </>
+  );
 };

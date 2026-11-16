@@ -1,4 +1,5 @@
 import { Input, Button } from '@krgaa/react-developer-burger-ui-components';
+import { clsx } from 'clsx';
 import { Link } from 'react-router-dom';
 
 import type { PageUIProps } from '@ui-pages/common-type';
@@ -7,17 +8,19 @@ import styles from '../common.module.css';
 
 export const ForgotPasswordUI = ({
   errorText,
+  isLoading = false,
   email,
   setEmail,
   handleSubmit,
 }: PageUIProps): React.JSX.Element => (
   <main className={styles.container}>
-    <div className={`pt-6 ${styles.wrapCenter}`}>
+    <div className={clsx('pt-6', styles.wrapCenter)}>
       <h3 className="pb-6 text text_type_main-medium">Восстановление пароля</h3>
-      <form className={`pb-15 ${styles.form}`} name="login" onSubmit={handleSubmit}>
+      <form className={clsx('pb-15', styles.form)} name="login" onSubmit={handleSubmit}>
         <div className="pb-6">
           <Input
             type="email"
+            required
             placeholder="Укажите e-mail"
             onChange={(e) => setEmail(e.target.value)}
             value={email}
@@ -27,20 +30,20 @@ export const ForgotPasswordUI = ({
             size="default"
           />
         </div>
-        <div className={`pb-6 ${styles.button}`}>
-          <Button type="primary" size="medium" htmlType="submit">
-            Восстановить
+        <div className={clsx('pb-6', styles.button)}>
+          <Button type="primary" size="medium" htmlType="submit" disabled={isLoading}>
+            {isLoading ? 'Отправляем…' : 'Восстановить'}
           </Button>
         </div>
         {errorText && (
-          <p className={`${styles.error} text text_type_main-default pb-6`}>
+          <p className={clsx(styles.error, 'text text_type_main-default pb-6')}>
             {errorText}
           </p>
         )}
       </form>
-      <div className={`${styles.question} text text_type_main-default pb-6`}>
+      <div className={clsx(styles.question, 'text text_type_main-default pb-6')}>
         Вспомнили пароль?
-        <Link to={'/login'} className={`pl-2 ${styles.link}`}>
+        <Link to={'/login'} className={clsx('pl-2', styles.link)}>
           Войти
         </Link>
       </div>

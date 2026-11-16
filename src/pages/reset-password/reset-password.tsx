@@ -1,35 +1,40 @@
-import { resetPasswordApi } from '@api';
+import { clearUserError, resetPassword, selectUserState } from '@slices/user';
 import { ResetPasswordUI } from '@ui-pages';
-import { type SyntheticEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+
+import { useDispatch, useSelector } from '@services/store';
+import { RESET_PASSWORD_KEY } from '@utils/constants';
+
+import type { SyntheticEvent } from 'react';
 
 export const ResetPassword = (): React.JSX.Element => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { error, isLoading } = useSelector(selectUserState);
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
-  const [error, setError] = useState<Error | null>(null);
-
-  const handleSubmit = (e: SyntheticEvent): void => {
-    e.preventDefault();
-
-    setError(null);
-    void resetPasswordApi({ password, token })
-      .then(() => {
-        localStorage.removeItem('resetPassword');
-        void navigate('/login');
-      })
-      .catch((err: Error) => setError(err));
-  };
-
+  const [canReset] = useState(() => !!sessionStorage.getItem(RESET_PASSWORD_KEY));
   useEffect(() => {
-    if (!localStorage.getItem('resetPassword')) {
-      void navigate('/forgot-password', { replace: true });
-    }
-  }, [navigate]);
-
+    dispatch(clearUserError());
+  }, [dispatch]);
+  const handleSubmit = (event: SyntheticEvent): void => {
+    event.preventDefault();
+    if (isLoading) return;
+    void dispatch(resetPassword({ password, token }))
+      .unwrap()
+      .then(() => {
+        void navigate('/login', { replace: true });
+      })
+      .catch(() => {
+        /* The slice exposes the error to the form. */
+      });
+  };
+  if (!canReset) return <Navigate to="/forgot-password" replace />;
   return (
     <ResetPasswordUI
-      errorText={error?.message}
+      errorText={error ?? undefined}
+      isLoading={isLoading}
       password={password}
       token={token}
       setPassword={setPassword}
