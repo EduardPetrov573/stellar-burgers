@@ -37,62 +37,64 @@ const order: TOrder = {
 };
 const credentials = { email: user.email, password: 'test-password' };
 
-beforeEach(() => {
-  jest.resetAllMocks();
-});
-
-test('a failed ingredients request leaves a retryable error and a successful retry clears it', async () => {
-  const store = configureStore({ reducer: rootReducer });
-  jest
-    .mocked(getIngredientsApi)
-    .mockRejectedValueOnce(new Error('Сервер недоступен'))
-    .mockResolvedValueOnce([ingredient]);
-  const request = store.dispatch(fetchIngredients());
-  expect(store.getState().ingredients.isLoading).toBe(true);
-  await request;
-  expect(store.getState().ingredients.error).toBe('Сервер недоступен');
-  await store.dispatch(fetchIngredients());
-  expect(store.getState().ingredients).toMatchObject({
-    isLoading: false,
-    error: null,
-    items: [ingredient],
+describe('Store request lifecycle', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
   });
-});
 
-test('a failed checkout keeps the burger, while a successful retry clears it without loading unseen lists', async () => {
-  const store = configureStore({ reducer: rootReducer });
-  store.dispatch(login.fulfilled(user, 'login', credentials));
-  store.dispatch(addIngredient(ingredient));
-  jest
-    .mocked(orderBurgerApi)
-    .mockRejectedValueOnce(new Error('Заказ не создан'))
-    .mockResolvedValueOnce({ success: true, order, name: order.name });
-  const ids = [ingredient._id, ingredient._id];
-  await store.dispatch(createOrder(ids));
-  expect(store.getState().burgerConstructor.bun?._id).toBe(ingredient._id);
-  expect(store.getState().orders.submitError).toBe('Заказ не создан');
-  await store.dispatch(createOrder(ids));
-  expect(store.getState().burgerConstructor).toEqual({ bun: null, ingredients: [] });
-  expect(store.getState().orders.created).toEqual(order);
+  test('a failed ingredients request leaves a retryable error and a successful retry clears it', async () => {
+    const store = configureStore({ reducer: rootReducer });
+    jest
+      .mocked(getIngredientsApi)
+      .mockRejectedValueOnce(new Error('Сервер недоступен'))
+      .mockResolvedValueOnce([ingredient]);
+    const request = store.dispatch(fetchIngredients());
+    expect(store.getState().ingredients.isLoading).toBe(true);
+    await request;
+    expect(store.getState().ingredients.error).toBe('Сервер недоступен');
+    await store.dispatch(fetchIngredients());
+    expect(store.getState().ingredients).toMatchObject({
+      isLoading: false,
+      error: null,
+      items: [ingredient],
+    });
+  });
 
-  expect(getFeedsApi).not.toHaveBeenCalled();
-  expect(getOrdersApi).not.toHaveBeenCalled();
-});
+  test('a failed checkout keeps the burger, while a successful retry clears it without loading unseen lists', async () => {
+    const store = configureStore({ reducer: rootReducer });
+    store.dispatch(login.fulfilled(user, 'login', credentials));
+    store.dispatch(addIngredient(ingredient));
+    jest
+      .mocked(orderBurgerApi)
+      .mockRejectedValueOnce(new Error('Заказ не создан'))
+      .mockResolvedValueOnce({ success: true, order, name: order.name });
+    const ids = [ingredient._id, ingredient._id];
+    await store.dispatch(createOrder(ids));
+    expect(store.getState().burgerConstructor.bun?._id).toBe(ingredient._id);
+    expect(store.getState().orders.submitError).toBe('Заказ не создан');
+    await store.dispatch(createOrder(ids));
+    expect(store.getState().burgerConstructor).toEqual({ bun: null, ingredients: [] });
+    expect(store.getState().orders.created).toEqual(order);
 
-test('a private request finishing after logout cannot restore the previous user history', async () => {
-  const store = configureStore({ reducer: rootReducer });
-  store.dispatch(login.fulfilled(user, 'login', credentials));
-  let finishRequest: (orders: TOrder[]) => void = () => undefined;
-  jest.mocked(getOrdersApi).mockImplementation(
-    () =>
-      new Promise((resolve) => {
-        finishRequest = resolve;
-      })
-  );
-  const request = store.dispatch(fetchHistory());
-  store.dispatch(logout.fulfilled(undefined, 'logout', undefined));
-  finishRequest([order]);
-  await request;
-  expect(store.getState().user.user).toBeNull();
-  expect(store.getState().feed.history).toEqual([]);
+    expect(getFeedsApi).not.toHaveBeenCalled();
+    expect(getOrdersApi).not.toHaveBeenCalled();
+  });
+
+  test('a private request finishing after logout cannot restore the previous user history', async () => {
+    const store = configureStore({ reducer: rootReducer });
+    store.dispatch(login.fulfilled(user, 'login', credentials));
+    let finishRequest: (orders: TOrder[]) => void = () => undefined;
+    jest.mocked(getOrdersApi).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishRequest = resolve;
+        })
+    );
+    const request = store.dispatch(fetchHistory());
+    store.dispatch(logout.fulfilled(undefined, 'logout', undefined));
+    finishRequest([order]);
+    await request;
+    expect(store.getState().user.user).toBeNull();
+    expect(store.getState().feed.history).toEqual([]);
+  });
 });

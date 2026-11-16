@@ -28,6 +28,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'http://localhost:4000',
+    serviceWorkers: 'block',
     launchOptions: {
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
     },
@@ -80,5 +81,5 @@ export default defineConfig({
     env: { BURGER_API_URL: 'https://norma.ffapi.ru/api' },
     url: 'http://localhost:4000',
     reuseExistingServer: !process.env.CI,
-  }
+  },
 });

@@ -1,20 +1,19 @@
-import { ingredients } from './fixtures/ingredients';
-export { ingredients } from './fixtures/ingredients';
+import { API, readHarResponse, replayApi } from './har';
 
 import type { Page } from '@playwright/test';
 import type { TOrder, TUser } from '../src/utils/types';
 
-export const API = 'https://norma.ffapi.ru/api';
-export const initialUser: TUser = { name: 'Эдуард', email: 'eduard@example.com' };
-export const sampleOrder: TOrder = {
-  _id: 'order-1',
-  number: 123,
-  name: 'Космический бургер',
-  status: 'done',
-  ingredients: ['bun-a', 'main-a', 'sauce-a', 'bun-a'],
-  createdAt: '2026-11-13T12:00:00.000Z',
-  updatedAt: '2026-11-13T12:00:00.000Z',
-};
+export { API, ingredients } from './har';
+
+export const initialUser = readHarResponse<{ user: TUser }>(
+  'backend.har',
+  '/auth/user'
+).user;
+export const sampleOrder = readHarResponse<{ orders: TOrder[] }>(
+  'backend.har',
+  '/orders/123'
+).orders[0];
+
 type ApiRequest = {
   path: string;
   method: string;
@@ -25,110 +24,18 @@ type ApiRequest = {
 export const setupApi = async (
   page: Page,
   authenticated = false
-): Promise<{
-  requests: ApiRequest[];
-  setFeed: (orders: TOrder[]) => void;
-  setHistory: (orders: TOrder[]) => void;
-  failIngredients: () => void;
-  expireUserToken: () => void;
-}> => {
+): Promise<{ requests: ApiRequest[] }> => {
   const requests: ApiRequest[] = [];
-  let user = { ...initialUser };
-  let feedOrders = [sampleOrder];
-  let historyOrders = [sampleOrder];
-  let ingredientsFail = false;
-  let userTokenExpired = false;
-  const setFeed = (orders: TOrder[]): void => {
-    feedOrders = orders;
-  };
-  const setHistory = (orders: TOrder[]): void => {
-    historyOrders = orders;
-  };
-  await page.route(`${API}/**`, async (route) => {
-    const request = route.request();
-    const path = new URL(request.url()).pathname.replace('/api', '');
-    const method = request.method();
-    const body = request.postData()
-      ? (JSON.parse(request.postData()!) as Record<string, string | string[]>)
-      : {};
+  page.on('request', (request) => {
+    if (!request.url().startsWith(`${API}/`)) return;
     requests.push({
-      path,
-      method,
+      path: new URL(request.url()).pathname.replace('/api', ''),
+      method: request.method(),
       authorization: request.headers().authorization,
-      body,
+      body: request.postData() ? (JSON.parse(request.postData()!) as unknown) : {},
     });
-    const respond = async (json: unknown, status = 200): Promise<void> =>
-      route.fulfill({ status, json });
-    if (path === '/ingredients') {
-      if (ingredientsFail) {
-        ingredientsFail = false;
-        return respond({ success: false, message: 'Сервер временно недоступен' }, 500);
-      }
-      return respond({ success: true, data: ingredients });
-    }
-    if (path === '/auth/user') {
-      if (userTokenExpired) {
-        userTokenExpired = false;
-        return respond({ success: false, message: 'jwt expired' }, 403);
-      }
-      if (method === 'PATCH')
-        user = {
-          name: typeof body.name === 'string' ? body.name : user.name,
-          email: typeof body.email === 'string' ? body.email : user.email,
-        };
-      return respond({ success: true, user });
-    }
-    if (path === '/auth/login' || path === '/auth/register') {
-      if (body.email === 'invalid@example.com')
-        return respond({ success: false, message: 'Неверные данные' }, 401);
-      if (typeof body.name === 'string') user.name = body.name;
-      if (typeof body.email === 'string') user.email = body.email;
-      return respond({
-        success: true,
-        user,
-        accessToken: 'Bearer test-access',
-        refreshToken: 'test-refresh',
-      });
-    }
-    if (path === '/auth/token')
-      return respond({
-        success: true,
-        accessToken: 'Bearer refreshed-access',
-        refreshToken: 'refreshed-refresh',
-      });
-    if (path === '/auth/logout' || path.startsWith('/password-reset'))
-      return respond({ success: true });
-    if (path === '/orders/all')
-      return respond({
-        success: true,
-        orders: feedOrders,
-        total: 500 + feedOrders.length,
-        totalToday: feedOrders.length,
-      });
-    if (path === '/orders' && method === 'GET')
-      return respond({ success: true, orders: historyOrders });
-    if (path === '/orders' && method === 'POST') {
-      const order = {
-        ...sampleOrder,
-        _id: 'new-order',
-        number: 124,
-        ingredients: body.ingredients,
-      };
-      setFeed([order as TOrder, ...feedOrders]);
-      setHistory([order as TOrder, ...historyOrders]);
-      return respond({ success: true, name: order.name, order });
-    }
-    if (path.startsWith('/orders/')) {
-      const number = Number(path.split('/').pop());
-      return respond({
-        success: true,
-        orders: [...feedOrders, ...historyOrders]
-          .filter((order) => order.number === number)
-          .slice(0, 1),
-      });
-    }
-    return respond({ success: false, message: 'Unknown test endpoint' }, 404);
   });
+  await replayApi(page);
   if (authenticated) {
     await page.context().addCookies([
       {
@@ -145,15 +52,5 @@ export const setupApi = async (
       }
     });
   }
-  return {
-    requests,
-    setFeed,
-    setHistory,
-    failIngredients: () => {
-      ingredientsFail = true;
-    },
-    expireUserToken: () => {
-      userTokenExpired = true;
-    },
-  };
+  return { requests };
 };
