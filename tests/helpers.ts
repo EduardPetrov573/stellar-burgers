@@ -1,33 +1,10 @@
+import { ingredients } from './fixtures/ingredients';
+export { ingredients } from './fixtures/ingredients';
+
 import type { Page } from '@playwright/test';
-import type { TIngredient, TOrder, TUser } from '../src/utils/types';
+import type { TOrder, TUser } from '../src/utils/types';
 
 export const API = 'https://norma.ffapi.ru/api';
-const image =
-  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="240" height="120"%3E%3Cellipse cx="120" cy="60" rx="60" ry="30" fill="cyan"/%3E%3C/svg%3E';
-const createIngredient = (
-  _id: string,
-  name: string,
-  type: string,
-  price: number
-): TIngredient => ({
-  _id,
-  name,
-  type,
-  price,
-  image,
-  image_large: image,
-  image_mobile: image,
-  calories: 100,
-  proteins: 10,
-  fat: 5,
-  carbohydrates: 20,
-});
-export const ingredients = [
-  createIngredient('bun-a', 'Краторная булка N-200i', 'bun', 20),
-  createIngredient('bun-b', 'Флюоресцентная булка R2-D3', 'bun', 40),
-  createIngredient('main-a', 'Говяжий метеорит', 'main', 300),
-  createIngredient('sauce-a', 'Соус Spicy-X', 'sauce', 30),
-];
 export const initialUser: TUser = { name: 'Эдуард', email: 'eduard@example.com' };
 export const sampleOrder: TOrder = {
   _id: 'order-1',
